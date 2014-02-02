@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<head><title>Widgets</title></head>
+<body>
+  {% if desc %}<p>In descending order</p>{% endif %}
+  <ul>{% for widget in widgets %}
+      <li>{{ widget }}</li>
+      {% endfor %}</ul>
+</body>
+
+

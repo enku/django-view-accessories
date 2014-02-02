@@ -69,8 +69,10 @@ def stacked_list_view(request, widget):
     return {'widgets': widget}
 
 
-@template_list_view(queryset=Widget.objects.order_by('-pk'), allow_empty=False)
+@template_list_view(queryset=Widget.objects.order_by('-pk'), allow_empty=False,
+                    paginate=5, page_size=5)
 def my_template_list_view(request, widgets):
+    widgets = request.accessories['pagination']['objects']
     return {'widgets': widgets, 'desc': True}
 
 

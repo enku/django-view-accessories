@@ -16,14 +16,14 @@ __all__ = ('detail_view', 'template_detail_view')
 def detail_view(model, methods=None):
     """A detail view.
 
-    Note unlike Django's DetailView this does not return a rendered
+    Note  unlike Django's  DetailView this  does not  return a  rendered
     template (see *template_detail_view* for that).
 
     This decorator accepts one argument, *model* which is the model name
-    queried by the decorator. The decorator expects urlconf to pass
-    the first positional argument as the primary key of *model*. The
+    queried by the decorator. The  decorator expects urlconf to pass the
+    first  positional  argument  as  the primary  key  of  *model*.  The
     decorator will then *get_object_or_404* that model and then call the
-    decorated function, with the first positional argument pass to it
+    decorated function,  with the first  positional argument pass  to it
     being the model object fetched.
 
     A quick example::
@@ -53,21 +53,22 @@ def template_detail_view(model, template_name=None, content_type=None,
                          template_name_suffix='_detail', methods=None):
     """A detail view that renders a template.
 
-    This is probably the view decorator that you want. It
-    works like *detail_view* but expects the decorated view to
-    return a context dictionary which will be used to render
-    and return a template. The default *template_name* is
-    computed dynamically based on the app & model names (just as
-    Django's). For example, **some_app.models.Book**'s default
-    *template_name* would be **some_app/book_detail.html**. If
-    *template_name_suffix* is passed instead, it will default to, e.g.
+    This   is  probably   the   view  decorator   that   you  want.   It
+    works   like   *detail_view*   but  expects   the   decorated   view
+    to   return   a  context   dictionary   which   will  be   used   to
+    render   and  return   a  template.   The  default   *template_name*
+    is   computed  dynamically   based  on   the  app   &  model   names
+    (just   as   Django's).  For   example,   **some_app.models.Book**'s
+    default *template_name*  would be  **some_app/book_detail.html**. If
+    *template_name_suffix* is  passed instead, it will  default to, e.g.
     **some_app/book_customsuffix.html**.
 
-    The *model* argument is the same as in *detail_view*.
-    The *content_type* argument is self-explanatory (same as
+    The   *model*   argument   is   the  same   as   in   *detail_view*.
+    The   *content_type*   argument   is   self-explanatory   (same   as
     *generic.template_view*).
 
-    In addition it accepts the *methods* argument as all view decorators.
+    In  addition  it   accepts  the  *methods*  argument   as  all  view
+    decorators.
     """
     def decorate(func):
         @wraps(func)

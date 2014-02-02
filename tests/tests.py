@@ -8,8 +8,9 @@ from django.core.urlresolvers import reverse
 from django import http
 from django.test import TestCase, RequestFactory
 
+from view_accessories import accessorize
 from view_accessories.generic import view, redirect_view
-from view_accessories.list import list_view
+from view_accessories.list import list_view, paginate_queryset
 from test_app.models import Widget
 
 factory = RequestFactory()
@@ -270,6 +271,102 @@ class TemplateListView(TestCase):
 
         self.assertContains(response, 'In descending order')
 
+    def test_template_list_view_has_pagination(self):
+        # Given the widgets.
+        for i in range(7):
+            Widget.objects.create(text='TemplateListView_%i' % i)
+
+        # Given the template_list_view view
+        view = reverse('test_app.views.my_template_list_view') + '?page=2'
+
+        # When we call the view
+        response = self.client.get(view)
+
+        # Then it has pagination
+        self.assertContains(response, 'TemplateListView_1')
+        self.assertContains(response, 'TemplateListView_0')
+        self.assertNotContains(response, 'TemplateListView_3')
+
+
+class Pagination(TestCase):
+    def setUp(self):
+        for i in range(23):
+            Widget.objects.create(text='Widget %s' % i)
+        self.widgets = Widget.objects.all()
+
+    def test_paginate_queryset(self):
+        """paginate_queryset()"""
+        # Given the queryset
+        queryset = self.widgets
+
+        # And the request
+        request = factory.get('/?page=2')
+
+        # When we call paginate_queryset()
+        paginate_queryset(request, queryset, 'page', 5)
+
+        # Then we get a pagination with the pertinant data
+        pagination = request.accessories['pagination']
+        self.assertEqual(type(pagination), dict)
+        self.assertEqual(len(pagination['objects']), 5)
+        self.assertEqual(pagination['page'].number, 2)
+        self.assertTrue(pagination['has_other_pages'])
+
+    def test_view_with_pagination(self):
+        # Given the decorated view
+        @list_view(model=Widget, paginate=True, page_size=5)
+        def my_view(request, widgets):
+            page_widgets = request.accessories['pagination']['objects']
+            response = http.HttpResponse(
+                '\n'.join(i.text for i in page_widgets))
+            response.content_type = 'text/plain'
+            return response
+
+        # When we access the view
+        request = factory.get('/?page=last')
+        response = my_view(request)
+
+        # We have a "pagination" accessory
+        self.assertTrue('pagination' in request.accessories)
+
+        # Our page has 3 objects
+        self.assertEqual(len(response.content.decode('utf-8').split('\n')), 3)
+
+        # Because we're on the last page
+        self.assertFalse(request.accessories['pagination']['page'].has_next())
+
+    def test_invalid_page_raises_404(self):
+        """Invalid page => HTTP 404"""
+        # Given the queryset
+        queryset = self.widgets
+
+        # And the request for an invalid page
+        request = factory.get('/?page=100')
+
+        # When we call paginate_queryset() it raises 404
+        with self.assertRaises(http.Http404):
+            paginate_queryset(request, queryset, 'page', 5)
+
+        # A "bugus" page does the same
+        request = factory.get('/?page=invalid')
+        with self.assertRaises(http.Http404):
+            paginate_queryset(request, queryset, 'page', 5)
+
+    def test_page_size_from_request(self):
+        # Given the queryset
+        queryset = self.widgets
+
+        # And the request for an invalid page
+        request = factory.get('/?page_size=10&page=3')
+
+        # Then we can call paginate_queryset() to get tha page size from the
+        # request
+        paginate_queryset(request, queryset, 'page', 'page_size')
+        pagination = request.accessories['pagination']
+        self.assertEqual(pagination['paginator'].per_page, 10)
+        self.assertEqual(len(pagination['objects']), 3)
+        self.assertEqual(pagination['page'].number, 3)
+
 
 class WithDjangoDecorators(TestCase):
     def test_login_required(self):
@@ -294,6 +391,29 @@ class WithDjangoDecorators(TestCase):
         # Then we can access the view successfully
         response = self.client.get(view)
         self.assertEqual(response.status_code, 200)
+
+
+class Accesorize(TestCase):
+    """Test the accessorize() function"""
+    def test_accessorize(self):
+        """accessorize()"""
+        # given the HttpRequest
+        request = factory.get('/')
+
+        # When we call accessorize() on it.
+        accessorize(request, a='a', b='b')
+
+        # Then it is accessorized
+        self.assertEqual(request.accessories['a'], 'a')
+        self.assertEqual(request.accessories['b'], 'b')
+
+        # Calling it again with the same key replaces it
+        accessorize(request, a='c')
+        self.assertEqual(request.accessories['a'], 'c')
+
+        # And calling with a new key adds to it.
+        accessorize(request, d='d')
+        self.assertEqual(request.accessories['d'], 'd')
 
 
 if __name__ == '__main__':

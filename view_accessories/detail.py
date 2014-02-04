@@ -14,7 +14,7 @@ from .generic import template_view, view
 __all__ = ('detail_view', 'template_detail_view')
 
 
-def detail_view(model, methods=None):
+def detail_view(model, field='pk', methods=None):
     """A detail view.
 
     Note  unlike Django's  DetailView this  does not  return a  rendered
@@ -26,6 +26,9 @@ def detail_view(model, methods=None):
     decorator will then *get_object_or_404* that model and then call the
     decorated function. The request's accessories will have an "object"
     key that references the model object that was fetched.
+
+    If  *field* is  specified, then  the model  will be  queried by  the
+    specified field instead of the default primary key.
 
     A quick example::
 
@@ -45,15 +48,16 @@ def detail_view(model, methods=None):
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            obj = get_object_or_404(model, pk=args[0])
+            obj = get_object_or_404(model, **{field: args[0]})
             accessorize(request, object=obj)
             return view(methods=methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 
 
-def template_detail_view(model, template_name=None, content_type=None,
-                         template_name_suffix='_detail', methods=None):
+def template_detail_view(model, field='pk', template_name=None,
+                         content_type=None, template_name_suffix='_detail',
+                         methods=None):
     """A detail view that renders a template.
 
     This   is  probably   the   view  decorator   that   you  want.   It
@@ -76,7 +80,7 @@ def template_detail_view(model, template_name=None, content_type=None,
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            obj = get_object_or_404(model, pk=args[0])
+            obj = get_object_or_404(model, **{field: args[0]})
             accessorize(request, object=obj)
 
             my_template_name = template_name

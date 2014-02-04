@@ -12,6 +12,7 @@ from django.test import TestCase, RequestFactory
 from view_accessories import accessorize
 from view_accessories.form import form_view
 from view_accessories.generic import view, redirect_view
+from view_accessories.detail import detail_view
 from view_accessories.list import list_view, paginate_queryset
 from test_app.models import Widget
 
@@ -171,6 +172,24 @@ class DetailView(TestCase):
         self.assertContains(response, 'This is a test')
         self.assertEqual(response.templates[0].name,
                          'test_app/widget_detail.html')
+
+    def test_detail_view_with_field(self):
+        """Provide field to detail_view"""
+        # Given the widget
+        widget = Widget()
+        widget.text = 'This is a test'
+        widget.save()
+
+        # And the detail "view"
+        @detail_view(model=Widget, field='text')
+        def my_view(request, text):
+            return request
+
+        # When we call the view
+        request = my_view(factory.get('/'), 'This is a test')
+
+        # Then the view gets our widget
+        self.assertEqual(widget, request.accessories['object'])
 
 
 class TemplateDetailView(TestCase):

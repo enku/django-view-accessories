@@ -25,10 +25,9 @@ def my_template_view(request, arg):
     return {'arg': arg}
 
 
-@redirect_view(url='http://www.google.com/', permanent=False,
-               query_string=True)
+@redirect_view(permanent=False, query_string=True)
 def my_redirect_view(request):
-    pass
+    return 'http://www.google.com/'
 
 
 @view(methods=['POST'])

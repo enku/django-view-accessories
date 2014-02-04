@@ -105,9 +105,9 @@ class RedirectView(TestCase):
 
     def test_redirect_permanent(self):
         # Given the view with permanent redirect
-        @redirect_view('https://www.google.com/', permanent=True)
+        @redirect_view(permanent=True)
         def myview(request):
-            pass
+            return 'https://www.google.com/'
 
         # When we access the view
         response = myview(factory.get('/'))
@@ -118,9 +118,9 @@ class RedirectView(TestCase):
 
     def test_response_gone(self):
         # Given the view with no url
-        @redirect_view(None)
+        @redirect_view
         def myview(request):
-            pass
+            return None
 
         # When we access the view
         response = myview(factory.get('/'))

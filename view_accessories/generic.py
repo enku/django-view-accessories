@@ -95,12 +95,13 @@ def template_view(template_name, content_type=None, methods=None):
     return decorate
 
 
-def redirect_view(url, permanent=True, query_string=False, methods=None):
+def redirect_view(func=None, permanent=True, query_string=False, methods=None):
     """Redirect view decorator.
 
-    This  is analogous  to Django's  RedirectView. It  takes 1  required
-    argument: *url*,  but it  can be  empty (or None  or False)  and the
-    decorator will return the HTTP GONE status to the client.
+    This is analogous to Django's RedirectView, but instead the url to
+    redirect to is expected to be returned by the decorated view. If the
+    view returns an empty string (or None or False) the decorator will
+    return the HTTP GONE status to the client.
 
     The two  optional arguments are  *permanent* which defaults  to True
     and *query_string*  which, if True  takes the QUERY_STRING  from the
@@ -111,16 +112,15 @@ def redirect_view(url, permanent=True, query_string=False, methods=None):
 
     The simple example::
 
-        @redirect_view('http://someothersite.com/')
+        @redirect_view
         def someothersite(request):
-            pass
+            return 'http://someothersite.com/'
 
-    Note that the returned value of the docorated function is
-    (currently) unused.
     """
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
+            url = func(request, *args, **kwargs)
             if not url:
                 return http.HttpResponseGone()
 
@@ -133,6 +133,9 @@ def redirect_view(url, permanent=True, query_string=False, methods=None):
                 return http.HttpResponsePermanentRedirect(proper_url)
             return http.HttpResponseRedirect(proper_url)
         return wrapper
+
+    if func:
+        return decorate(func)
     return decorate
 
 

@@ -22,10 +22,9 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
     Note  unlike  Django's ListView  this  does  not return  a  rendered
     template (see *template_list_view* for that).
 
-    This decorator requires either *model*  or *queryset* (but not both)
-    to be passed  to it. The decorated view function  will be passed the
-    queryset as it's second  positional argument (behind the HttpRequest
-    object).
+    This decorator requires either *model* or *queryset* (but not both)
+    to be passed to it. The decorated view's request object will be
+    decorated with an "object_list" key which points to queryset.
 
     If *allow_empty*  is False and the  queryset to be passed  is empty,
     then the decorator, instead of  calling the decorated function, will
@@ -68,7 +67,8 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
     A quick example::
 
         @list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request, widgets):
+        def my_view(request):
+            widgets = request.accessories['object_list']
             page_widgets = request.accessories['pagination']['objects']
             response = http.HttpResponse(json.dumps(page_widgets))
             response.content_type = 'application/json'
@@ -78,6 +78,7 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             qs = _get_qs_or_404(model, queryset, allow_empty)
+            accessorize(request, object_list=qs)
 
             if paginate:
                 paginate_queryset(
@@ -89,7 +90,7 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
                     allow_empty_first_page=allow_empty
                 )
 
-            return view(methods)(func)(request, qs, *args, **kwargs)
+            return view(methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 
@@ -121,7 +122,8 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
     A quick example::
 
         @template_list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request, widgets):
+        def my_view(request):
+            widgets = request.accessories['object_list']
             pagination = request.accessories['pagination']
             return {'widgets': pagination['objects'],
                     'total': widgets.count(),
@@ -153,7 +155,7 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
             return template_view(
                 template_name=my_template_name,
                 content_type=content_type,
-                methods=methods)(func)(request, qs, *args, **kwargs)
+                methods=methods)(func)(request, *args, **kwargs)
 
         return wrapper
     return decorate

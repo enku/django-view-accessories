@@ -37,7 +37,8 @@ def post_only(request):
 
 
 @detail_view(model=Widget)
-def my_detail_view(request, widget):
+def my_detail_view(request, widget_id):
+    widget = request.accessories['object']
     response = HttpResponse(widget.text.encode('utf-8'))
     response.content_type = 'text/plain; encoding=utf-8'
     return response
@@ -45,17 +46,20 @@ def my_detail_view(request, widget):
 
 @template_view(template_name='test_app/widget_detail.html')
 @detail_view(model=Widget)
-def detail_view_with_template(request, widget):
+def detail_view_with_template(request, widget_id):
+    widget = request.accessories['object']
     return {'widget': widget}
 
 
 @template_detail_view(model=Widget)
-def detail_view_with_template2(request, widget):
+def detail_view_with_template2(request, widget_id):
+    widget = request.accessories['object']
     return {'widget': widget}
 
 
 @list_view(model=Widget)
-def my_list_view(request, widgets):
+def my_list_view(request):
+    widgets = request.accessories['object_list']
     body = json.dumps([i.text for i in widgets])
     body = body.encode('utf-8')
     response = HttpResponse(body)
@@ -65,13 +69,14 @@ def my_list_view(request, widgets):
 
 @template_view(template_name='test_app/widget_list.html')
 @list_view(model=Widget)
-def stacked_list_view(request, widget):
-    return {'widgets': widget}
+def stacked_list_view(request):
+    widgets = request.accessories['object_list']
+    return {'widgets': widgets}
 
 
 @template_list_view(queryset=Widget.objects.order_by('-pk'), allow_empty=False,
                     paginate=5, page_size=5)
-def my_template_list_view(request, widgets):
+def my_template_list_view(request):
     widgets = request.accessories['pagination']['objects']
     return {'widgets': widgets, 'desc': True}
 

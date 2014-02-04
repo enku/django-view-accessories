@@ -8,6 +8,7 @@ from functools import wraps
 
 from django.shortcuts import get_object_or_404
 
+from . import accessorize
 from .generic import template_view, view
 
 __all__ = ('detail_view', 'template_detail_view')
@@ -20,18 +21,19 @@ def detail_view(model, methods=None):
     template (see *template_detail_view* for that).
 
     This decorator accepts one argument, *model* which is the model name
-    queried by the decorator. The  decorator expects urlconf to pass the
-    first  positional  argument  as  the primary  key  of  *model*.  The
+    queried by the decorator. The decorator expects urlconf to pass
+    the first positional argument as the primary key of *model*. The
     decorator will then *get_object_or_404* that model and then call the
-    decorated function,  with the first  positional argument pass  to it
-    being the model object fetched.
+    decorated function. The request's accessories will have an "object"
+    key that references the model object that was fetched.
 
     A quick example::
 
         from .models import Book
 
         @detail_view(Book)
-        def book_detail(request, book):
+        def book_detail(request, book_id):
+            book = request.accessories['object']
             return HttpResponse(book.title, content_type='text/plain')
 
     The urlconf would look something like this::
@@ -42,9 +44,10 @@ def detail_view(model, methods=None):
     """
     def decorate(func):
         @wraps(func)
-        def wrapper(request, id, *args, **kwargs):
-            obj = get_object_or_404(model, pk=id)
-            return view(methods)(func)(request, obj, *args, **kwargs)
+        def wrapper(request, *args, **kwargs):
+            obj = get_object_or_404(model, pk=args[0])
+            accessorize(request, object=obj)
+            return view(methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 
@@ -72,8 +75,9 @@ def template_detail_view(model, template_name=None, content_type=None,
     """
     def decorate(func):
         @wraps(func)
-        def wrapper(request, id, *args, **kwargs):
-            obj = get_object_or_404(model, pk=id)
+        def wrapper(request, *args, **kwargs):
+            obj = get_object_or_404(model, pk=args[0])
+            accessorize(request, object=obj)
 
             my_template_name = template_name
             if not my_template_name:
@@ -85,6 +89,6 @@ def template_detail_view(model, template_name=None, content_type=None,
             return template_view(
                 template_name=my_template_name,
                 content_type=content_type,
-                methods=methods)(func)(request, obj, *args, **kwargs)
+                methods=methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate

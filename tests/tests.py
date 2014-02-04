@@ -212,7 +212,8 @@ class ListView(TestCase):
 
         # When we define a list_view with a queryset
         @list_view(queryset=Widget.objects.all()[:4])
-        def my_list_view(request, widgets):
+        def my_list_view(request):
+            widgets = request.accessories['object_list']
             return widgets
 
         # Then the view is called with that queryset
@@ -225,7 +226,8 @@ class ListView(TestCase):
         """404 on allow_empty=False"""
         # When we define a list_view with a queryset with allow_empty=False
         @list_view(model=Widget, allow_empty=False)
-        def my_list_view(request, widgets):
+        def my_list_view(request):
+            widgets = request.accessories['object_list']
             return widgets
 
         # And call it without creating any widgets
@@ -315,10 +317,10 @@ class Pagination(TestCase):
     def test_view_with_pagination(self):
         # Given the decorated view
         @list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request, widgets):
-            page_widgets = request.accessories['pagination']['objects']
+        def my_view(request):
+            widgets = request.accessories['pagination']['objects']
             response = http.HttpResponse(
-                '\n'.join(i.text for i in page_widgets))
+                '\n'.join(i.text for i in widgets))
             response.content_type = 'text/plain'
             return response
 

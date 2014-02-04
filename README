@@ -62,7 +62,8 @@ which is still a lot of bioler plate. However consider the following::
     from .models import Book
 
     @detail_view(model=Book)
-    def book_detail(request, book):
+    def book_detail(request, book_id):
+        book = request.accessories['object']
         response = HttpResponse(book.title.encode('utf-8'))
         response.content_type = 'text/plain; encoding=utf-8'
         return response
@@ -76,9 +77,10 @@ which is still a lot of bioler plate. However consider the following::
     )
 
 
-In the above example when you access "/book/12/" The Book model with
-primary key 12 is fetched and passed to your view as the first argument.
-If no such Book exists then the decorator raises an Http404.
+In the above example, when you access "/book/12/" the Book model with
+primary key 12 is added as an "accessory" to the view's request in the
+form of request.accessories["object"]. If no such Book exists then the
+decorator raises an Http404.
 
 You only need to define one function/method. And just pass a parameter
 to the @detail_view decorator.
@@ -93,7 +95,8 @@ you subclass using mixins. With django-view-accessories you simply
 
     @template_view(template_name='some_app/book_detail.html')
     @detail_view(model=Book)
-    def book_detail_with_template(request, book):
+    def book_detail_with_template(request, book_id):
+        book = request.accessories['object']
         return {'book': book, 'version': '0.1.0'}
 
 Stacking decorators not your cup of tea? You can use the
@@ -102,7 +105,8 @@ template_detail_view instead::
     from view_accessories.detail import template_detail_view
 
     @template_detail_view(model=Book)
-    def book_detail_with_template(request, book):
+    def book_detail_with_template(request, book_id):
+        book = request.accessories['object']
         return {'book': book, 'version': '0.1.0'}
 
 
@@ -132,7 +136,8 @@ Want to do list views?  It's similar::
     from .models import Book
 
     @template_list_view(model=Books)
-    def book_list(request, books):
+    def book_list(request):
+        books = request.accessories['object_list']
         return {'books': books}
         
 
@@ -157,6 +162,7 @@ You can also stack them with Django's view decorators, e.g::
 
     @permission_required('some_app.delete_book')
     @detail_view(model=Book, methods=['DELETE'])
-    def delete_book(request, book):
+    def delete_book(request, book_id):
+        book = request.accessories['object']
         book.delete()
         return HttpResponse('', status=204)

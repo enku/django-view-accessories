@@ -47,7 +47,7 @@ def detail_view(model, methods=None):
         def wrapper(request, *args, **kwargs):
             obj = get_object_or_404(model, pk=args[0])
             accessorize(request, object=obj)
-            return view(methods)(func)(request, *args, **kwargs)
+            return view(methods=methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 

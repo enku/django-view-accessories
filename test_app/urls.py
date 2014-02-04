@@ -15,5 +15,7 @@ urlpatterns = patterns(
     url('^widgets2/$', 'stacked_list_view'),
     url('^widgets3/$', 'my_template_list_view'),
     url('^widgets4/$', 'login_required_view'),
+    url('^form1/$', 'form1'),
+    url('^form2/(\d+)/$', 'form2'),
     url('^$', 'index'),
 )

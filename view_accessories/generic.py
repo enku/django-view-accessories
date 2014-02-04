@@ -88,7 +88,7 @@ def template_view(template_name, content_type=None, methods=None):
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            response = view(methods)(func)(request, *args, **kwargs)
+            response = view(func, methods=methods)(request, *args, **kwargs)
             return render(request, template_name, response,
                           content_type=content_type)
         return wrapper
@@ -120,7 +120,7 @@ def redirect_view(func=None, permanent=True, query_string=False, methods=None):
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            url = func(request, *args, **kwargs)
+            url = view(func, methods=methods)(request, *args, **kwargs)
             if not url:
                 return http.HttpResponseGone()
 

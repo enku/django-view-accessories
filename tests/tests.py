@@ -5,10 +5,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_app.settings')
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django import forms
 from django import http
 from django.test import TestCase, RequestFactory
 
 from view_accessories import accessorize
+from view_accessories.form import form_view
 from view_accessories.generic import view, redirect_view
 from view_accessories.list import list_view, paginate_queryset
 from test_app.models import Widget
@@ -416,6 +418,51 @@ class Accesorize(TestCase):
         # And calling with a new key adds to it.
         accessorize(request, d='d')
         self.assertEqual(request.accessories['d'], 'd')
+
+
+class FormView(TestCase):
+    def test_form_view(self):
+        # Given the form
+        class TestForm(forms.Form):
+            name = forms.CharField(max_length=100)
+            age = forms.IntegerField()
+
+        # And the form_view that uses the form
+        @form_view(form=TestForm)
+        def test_view(request):
+            return request.accessories['form']
+
+        # When we post to the form
+        post_data = {'name': 'Sally', 'age': 5}
+        form = test_view(factory.post('/', post_data))
+
+        # Then I get a bound form with the data posted
+        self.assertTrue(isinstance(form, TestForm))
+        self.assertTrue(form.is_bound)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['name'], 'Sally')
+        self.assertEqual(form.cleaned_data['age'], 5)
+
+    def test_form_view_stacked_with_detail_and_template_views(self):
+        # And the following widget
+        widget = Widget.objects.create(text='Original Text')
+
+        # Given the triple-stacked form_view
+        view = reverse('test_app.views.form2', args=[widget.pk])
+
+        response = self.client.get(view)
+        self.assertContains(response, 'Original Text')
+
+        # When we post to the detail-like form_view with template
+        post_data = {'text': 'New Text'}
+        response = self.client.post(view, post_data)
+
+        # Then the response shows the new text
+        self.assertContains(response, 'New Text')
+
+        # And the model is updated
+        widget = Widget.objects.get(pk=widget.pk)  # refetch
+        self.assertEqual(widget.text, 'New Text')
 
 
 if __name__ == '__main__':

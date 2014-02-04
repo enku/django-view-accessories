@@ -7,9 +7,11 @@ from django.http import HttpResponse
 
 from view_accessories import __version__
 from view_accessories.detail import detail_view, template_detail_view
+from view_accessories.form import form_view
 from view_accessories.generic import redirect_view, template_view, view
 from view_accessories.list import list_view, template_list_view
 
+from .forms import TestForm
 from .models import Widget
 
 
@@ -83,6 +85,30 @@ def my_template_list_view(request):
 # Test with django's decorators
 login_required_view = login_required(
     login_url='/accounts/login/')(my_list_view)
+
+
+@template_view(template_name='test_app/form.html')
+@form_view(form=TestForm, methods=['GET', 'POST'])
+def form1(request, form):
+    text = ''
+    if form.is_bound and form.is_valid():
+        text = form.cleaned_data['text']
+    return {'form': form, 'text': text}
+
+
+# Triple stack
+@template_view(template_name='test_app/widget_edit.html')
+@detail_view(model=Widget)
+@form_view(form=TestForm)
+def form2(request, widget_id):
+    form = request.accessories['form']
+    widget = request.accessories['object']
+    if not form.is_bound:
+        form = TestForm({'text': widget.text})
+    elif form.is_valid():
+        widget.text = form.cleaned_data['text']
+        widget.save()
+    return {'form': form, 'widget': widget}
 
 
 @template_view(template_name='test_app/index.html')

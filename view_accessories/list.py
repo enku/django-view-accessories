@@ -90,7 +90,7 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
                     allow_empty_first_page=allow_empty
                 )
 
-            return view(methods)(func)(request, *args, **kwargs)
+            return view(methods=methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 

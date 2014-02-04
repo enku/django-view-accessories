@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>form_view test</title>
+</head>
+<body>
+{% if text %}<p>Your text: "{{ text }}"</p>{% endif %}
+<form action="." method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Submit" />
+</form>
+</body>

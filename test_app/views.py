@@ -38,8 +38,7 @@ def post_only(request):
 
 
 @detail_view(model=Widget)
-def my_detail_view(request, widget_id):
-    widget = request.accessories['object']
+def my_detail_view(request, widget):
     response = HttpResponse(widget.text.encode('utf-8'))
     response.content_type = 'text/plain; encoding=utf-8'
     return response
@@ -47,20 +46,17 @@ def my_detail_view(request, widget_id):
 
 @template_view(template_name='test_app/widget_detail.html')
 @detail_view(model=Widget)
-def detail_view_with_template(request, widget_id):
-    widget = request.accessories['object']
+def detail_view_with_template(request, widget):
     return {'widget': widget}
 
 
 @template_detail_view(model=Widget)
-def detail_view_with_template2(request, widget_id):
-    widget = request.accessories['object']
-    return {'widget': widget}
+def detail_view_with_template2(request, widget):
+    pass
 
 
 @list_view(model=Widget)
-def my_list_view(request):
-    widgets = request.accessories['object_list']
+def my_list_view(request, widgets):
     body = json.dumps([i.text for i in widgets])
     body = body.encode('utf-8')
     response = HttpResponse(body)
@@ -68,17 +64,16 @@ def my_list_view(request):
     return response
 
 
-@template_view(template_name='test_app/widget_list.html')
-@list_view(model=Widget)
-def stacked_list_view(request):
-    widgets = request.accessories['object_list']
-    return {'widgets': widgets}
+@list_view(Widget)
+@template_view('test_app/widget_list.html')
+def stacked_list_view(request, widgets):
+    pass
 
 
 @template_list_view(queryset=Widget.objects.order_by('-pk'), allow_empty=False,
                     paginate=5, page_size=5)
-def my_template_list_view(request):
-    widgets = request.accessories['pagination']['objects']
+def my_template_list_view(request, widgets, pagination):
+    widgets = pagination['objects']
     return {'widgets': widgets, 'desc': True}
 
 
@@ -100,9 +95,7 @@ def form1(request, form):
 @template_view(template_name='test_app/widget_edit.html')
 @detail_view(model=Widget)
 @form_view(form=TestForm)
-def form2(request, widget_id):
-    form = request.accessories['form']
-    widget = request.accessories['object']
+def form2(request, widget, form):
     if not form.is_bound:
         form = TestForm({'text': widget.text})
     elif form.is_valid():

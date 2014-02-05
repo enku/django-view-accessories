@@ -39,7 +39,7 @@ With django-view-accessories, this is the equivalent::
 
     @template_view(template_name="about.html")
     def about_view(request):
-        return {}
+        pass
 
 
 Then setting up the urlconf::
@@ -62,8 +62,7 @@ which is still a lot of bioler plate. However consider the following::
     from .models import Book
 
     @detail_view(model=Book)
-    def book_detail(request, book_id):
-        book = request.accessories['object']
+    def book_detail(request, book):
         response = HttpResponse(book.title.encode('utf-8'))
         response.content_type = 'text/plain; encoding=utf-8'
         return response
@@ -73,14 +72,13 @@ which is still a lot of bioler plate. However consider the following::
     from django.conf.urls import patterns
 
     urlpatterns = patterns('some_app.views',
-        (r'^book/(\d+)/', 'book_view'),
+        (r'^book/(?P<id>\d+)/', 'book_view'),
     )
 
 
 In the above example, when you access "/book/12/" the Book model with
-primary key 12 is added as an "accessory" to the view's request in the
-form of request.accessories["object"]. If no such Book exists then the
-decorator raises an Http404.
+primary key 12 is added as a keyword argument the decorated view. If no
+such Book exists then the decorator raises an Http404.
 
 You only need to define one function/method. And just pass a parameter
 to the @detail_view decorator.
@@ -93,10 +91,9 @@ you subclass using mixins. With django-view-accessories you simply
     from view_accessories.generic import template_view
     from view_accessories.detail import detail_view
 
-    @template_view(template_name='some_app/book_detail.html')
     @detail_view(model=Book)
-    def book_detail_with_template(request, book_id):
-        book = request.accessories['object']
+    @template_view(template_name='some_app/book_detail.html')
+    def book_detail_with_template(request, book):
         return {'book': book, 'version': '0.1.0'}
 
 Stacking decorators not your cup of tea? You can use the
@@ -105,8 +102,7 @@ template_detail_view instead::
     from view_accessories.detail import template_detail_view
 
     @template_detail_view(model=Book)
-    def book_detail_with_template(request, book_id):
-        book = request.accessories['object']
+    def book_detail_with_template(request, book):
         return {'book': book, 'version': '0.1.0'}
 
 
@@ -124,6 +120,20 @@ The equivalent of the above, with class-based views is::
             return context
 
 
+Even better, if All the context you wanted to pass to the template in the above
+example wat the book itself, you can define your function to simply return
+nothing::
+
+    @template_detail_view(model=Book)
+    def book_detail_with_template(request, book):
+        pass
+
+This is equivalent to::
+
+    @template_detail_view(model=Book, template_name='some_app/book_detail.html')
+    def book_detail_with_template(request, book):
+        return {'book': book}
+
 If you prefer the CBV way that's fine. It's also more flexible than
 django-view-accessories. But django-view-accesories is for people who
 prefer the function-based views with just a little sugar.
@@ -135,10 +145,9 @@ Want to do list views?  It's similar::
 
     from .models import Book
 
-    @template_list_view(model=Books)
-    def book_list(request):
-        books = request.accessories['object_list']
-        return {'books': books}
+    @template_list_view(model=Book)
+    def book_list(request, books):
+        pass
         
 
 If you don't want all Books you can instead pass
@@ -162,7 +171,6 @@ You can also stack them with Django's view decorators, e.g::
 
     @permission_required('some_app.delete_book')
     @detail_view(model=Book, methods=['DELETE'])
-    def delete_book(request, book_id):
-        book = request.accessories['object']
+    def delete_book(request, book):
         book.delete()
         return HttpResponse('', status=204)

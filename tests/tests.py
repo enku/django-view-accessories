@@ -9,7 +9,6 @@ from django import forms
 from django import http
 from django.test import TestCase, RequestFactory
 
-from view_accessories import accessorize
 from view_accessories.form import form_view
 from view_accessories.generic import view, redirect_view
 from view_accessories.detail import detail_view
@@ -181,15 +180,15 @@ class DetailView(TestCase):
         widget.save()
 
         # And the detail "view"
-        @detail_view(model=Widget, field='text')
-        def my_view(request, text):
-            return request
+        @detail_view(model=Widget, field='text', kwarg='text')
+        def my_view(request, widget):
+            return widget
 
         # When we call the view
-        request = my_view(factory.get('/'), 'This is a test')
+        response = my_view(factory.get('/'), text='This is a test')
 
         # Then the view gets our widget
-        self.assertEqual(widget, request.accessories['object'])
+        self.assertEqual(widget, response)
 
 
 class TemplateDetailView(TestCase):
@@ -233,8 +232,7 @@ class ListView(TestCase):
 
         # When we define a list_view with a queryset
         @list_view(queryset=Widget.objects.all()[:4])
-        def my_list_view(request):
-            widgets = request.accessories['object_list']
+        def my_list_view(request, widgets):
             return widgets
 
         # Then the view is called with that queryset
@@ -247,8 +245,7 @@ class ListView(TestCase):
         """404 on allow_empty=False"""
         # When we define a list_view with a queryset with allow_empty=False
         @list_view(model=Widget, allow_empty=False)
-        def my_list_view(request):
-            widgets = request.accessories['object_list']
+        def my_list_view(request, widgets):
             return widgets
 
         # And call it without creating any widgets
@@ -326,10 +323,9 @@ class Pagination(TestCase):
         request = factory.get('/?page=2')
 
         # When we call paginate_queryset()
-        paginate_queryset(request, queryset, 'page', 5)
+        pagination = paginate_queryset(request, queryset, 'page', 5)
 
         # Then we get a pagination with the pertinant data
-        pagination = request.accessories['pagination']
         self.assertEqual(type(pagination), dict)
         self.assertEqual(len(pagination['objects']), 5)
         self.assertEqual(pagination['page'].number, 2)
@@ -338,25 +334,26 @@ class Pagination(TestCase):
     def test_view_with_pagination(self):
         # Given the decorated view
         @list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request):
-            widgets = request.accessories['pagination']['objects']
+        def my_view(request, widgets, pagination=None):
+            widgets = pagination['objects']
             response = http.HttpResponse(
                 '\n'.join(i.text for i in widgets))
             response.content_type = 'text/plain'
-            return response
+            # The return value is contrived for testing
+            return response, pagination
 
         # When we access the view
         request = factory.get('/?page=last')
-        response = my_view(request)
+        response, pagination = my_view(request)
 
         # We have a "pagination" accessory
-        self.assertTrue('pagination' in request.accessories)
+        self.assertTrue(isinstance(pagination, dict))
 
         # Our page has 3 objects
         self.assertEqual(len(response.content.decode('utf-8').split('\n')), 3)
 
         # Because we're on the last page
-        self.assertFalse(request.accessories['pagination']['page'].has_next())
+        self.assertFalse(pagination['page'].has_next())
 
     def test_invalid_page_raises_404(self):
         """Invalid page => HTTP 404"""
@@ -384,8 +381,7 @@ class Pagination(TestCase):
 
         # Then we can call paginate_queryset() to get tha page size from the
         # request
-        paginate_queryset(request, queryset, 'page', 'page_size')
-        pagination = request.accessories['pagination']
+        pagination = paginate_queryset(request, queryset, 'page', 'page_size')
         self.assertEqual(pagination['paginator'].per_page, 10)
         self.assertEqual(len(pagination['objects']), 3)
         self.assertEqual(pagination['page'].number, 3)
@@ -416,29 +412,6 @@ class WithDjangoDecorators(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class Accesorize(TestCase):
-    """Test the accessorize() function"""
-    def test_accessorize(self):
-        """accessorize()"""
-        # given the HttpRequest
-        request = factory.get('/')
-
-        # When we call accessorize() on it.
-        accessorize(request, a='a', b='b')
-
-        # Then it is accessorized
-        self.assertEqual(request.accessories['a'], 'a')
-        self.assertEqual(request.accessories['b'], 'b')
-
-        # Calling it again with the same key replaces it
-        accessorize(request, a='c')
-        self.assertEqual(request.accessories['a'], 'c')
-
-        # And calling with a new key adds to it.
-        accessorize(request, d='d')
-        self.assertEqual(request.accessories['d'], 'd')
-
-
 class FormView(TestCase):
     def test_form_view(self):
         # Given the form
@@ -448,8 +421,8 @@ class FormView(TestCase):
 
         # And the form_view that uses the form
         @form_view(form=TestForm)
-        def test_view(request):
-            return request.accessories['form']
+        def test_view(request, form):
+            return form
 
         # When we post to the form
         post_data = {'name': 'Sally', 'age': 5}

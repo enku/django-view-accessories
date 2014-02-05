@@ -8,7 +8,6 @@ from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from .generic import template_view, view
-from . import accessorize
 
 
 __all__ = ('list_view', 'template_list_view', 'paginate_queryset')
@@ -22,9 +21,10 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
     Note  unlike  Django's ListView  this  does  not return  a  rendered
     template (see *template_list_view* for that).
 
-    This decorator requires either *model* or *queryset* (but not both)
-    to be passed to it. The decorated view's request object will be
-    decorated with an "object_list" key which points to queryset.
+    This decorator requires either *model*  or *queryset* (but not both)
+    to be passed to it. The decorated view will be called with a keyword
+    argument whose key is the "plural name" of the model in question and
+    whose value is the queryset.
 
     If *allow_empty*  is False and the  queryset to be passed  is empty,
     then the decorator, instead of  calling the decorated function, will
@@ -33,10 +33,9 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
     Pagination
     ----------
     This decorator supports pagination using Django's built-in Paginator
-    class. If  *paginate* is True,  then the request object  passed into
-    the  decorated function  will  be "accessorized"  with a  pagination
-    attribute.  This attribute  is  a Python  dictionary with  following
-    key/value pairs:
+    class. If *paginate* is true, then the decorated view will be passed
+    a  keyword argument  "pagination", the  value of  which is  a Python
+    dictionary with the following key/value pairs:
 
         "paginator": The actual Paginator object.
         "page": The paginator page for this request,
@@ -67,9 +66,8 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
     A quick example::
 
         @list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request):
-            widgets = request.accessories['object_list']
-            page_widgets = request.accessories['pagination']['objects']
+        def my_view(request, widgets, pagination):
+            page_widgets = pagination['objects']
             response = http.HttpResponse(json.dumps(page_widgets))
             response.content_type = 'application/json'
             return response
@@ -78,10 +76,12 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             qs = _get_qs_or_404(model, queryset, allow_empty)
-            accessorize(request, object_list=qs)
+            name = str(qs.model._meta.verbose_name_plural)
+            assert name not in kwargs
+            kwargs[name] = qs
 
             if paginate:
-                paginate_queryset(
+                pagination = paginate_queryset(
                     request,
                     qs,
                     page_kwarg,
@@ -89,6 +89,7 @@ def list_view(model=None, queryset=None, paginate=False, page_size='page_size',
                     orphans=paginate_orphans,
                     allow_empty_first_page=allow_empty
                 )
+                kwargs['pagination'] = pagination
 
             return view(methods=methods)(func)(request, *args, **kwargs)
         return wrapper
@@ -122,9 +123,7 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
     A quick example::
 
         @template_list_view(model=Widget, paginate=True, page_size=5)
-        def my_view(request):
-            widgets = request.accessories['object_list']
-            pagination = request.accessories['pagination']
+        def my_view(request, widgets, pagination):
             return {'widgets': pagination['objects'],
                     'total': widgets.count(),
                     'page': paginaton['page']
@@ -134,9 +133,12 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             qs = _get_qs_or_404(model, queryset, allow_empty)
+            name = str(qs.model._meta.verbose_name_plural)
+            assert name not in kwargs
+            kwargs[name] = qs
 
             if paginate:
-                paginate_queryset(
+                pagination = paginate_queryset(
                     request,
                     qs,
                     page_kwarg,
@@ -144,6 +146,7 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
                     orphans=paginate_orphans,
                     allow_empty_first_page=allow_empty
                 )
+                kwargs['pagination'] = pagination
 
             my_template_name = template_name
             if not my_template_name:
@@ -163,15 +166,13 @@ def template_list_view(model=None, queryset=None, allow_empty=True,
 
 def paginate_queryset(request, queryset, page_kwarg, per_page, orphans=0,
                       allow_empty_first_page=True, **kwargs):
-    """Accessorize a list_view queryset with pagination.
+    """Paginate the request and return a dict of pagination info.
 
     This function is used by *list_view* and *template_list_view* but is
     exposed because  it can also  be used on  its own or  by third-party
     view decorators.
 
-    The *request*  will be  "accessorized" with a  pagination attribute.
-    This  attribute  is a  Python  dictionary  with following  key/value
-    pairs:
+    Return a Python dictionary with following key/value pairs:
 
         "paginator": The actual Paginator object.
         "page": The paginator page for this request,
@@ -223,12 +224,12 @@ def paginate_queryset(request, queryset, page_kwarg, per_page, orphans=0,
 
     try:
         page = paginator.page(page_number)
-        accessorize(request, pagination={
+        return {
             'paginator': paginator,
             'page': page,
             'objects': page.object_list,
             'has_other_pages': page.has_other_pages(),
-        })
+        }
     except InvalidPage as exception:
         raise Http404(
             _('Invalid page %s: %s' % (page_number, str(exception))))

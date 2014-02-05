@@ -13,8 +13,6 @@ from functools import wraps
 from django import http
 from django.shortcuts import render
 
-from . import accessorize
-
 HTTP_METHODS = ('GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS',
                 'TRACE')
 
@@ -50,9 +48,6 @@ def view(func=None, methods=None):
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            # Make sure we have an .accessories attribute
-            accessorize(request)
-
             if request.method == 'OPTIONS':
                 return options(request, methods)
 
@@ -78,7 +73,11 @@ def template_view(template_name, content_type=None, methods=None):
     decorators.
 
     The decorated  function shall return  a context dictionary  which is
-    used to render the template. A quick example::
+    used  to render  the  template. If  the  decorated function  returns
+    *None* instead of a dict,  then the functions keyword arguments will
+    instead be used as the context dict to render the template.
+
+    A quick example::
 
         @template_view(template_name='some_app/version.html')
         def version(request):
@@ -89,7 +88,8 @@ def template_view(template_name, content_type=None, methods=None):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             response = view(func, methods=methods)(request, *args, **kwargs)
-            return render(request, template_name, response,
+            context = response if response is not None else kwargs
+            return render(request, template_name, context,
                           content_type=content_type)
         return wrapper
     return decorate

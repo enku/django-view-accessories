@@ -8,24 +8,24 @@ from functools import wraps
 
 from django.shortcuts import get_object_or_404
 
-from . import accessorize
 from .generic import template_view, view
 
 __all__ = ('detail_view', 'template_detail_view')
 
 
-def detail_view(model, field='pk', methods=None):
+def detail_view(model, field='pk', kwarg='id', methods=None):
     """A detail view.
 
     Note  unlike Django's  DetailView this  does not  return a  rendered
     template (see *template_detail_view* for that).
 
-    This decorator accepts one argument, *model* which is the model name
-    queried by the decorator. The decorator expects urlconf to pass
-    the first positional argument as the primary key of *model*. The
-    decorator will then *get_object_or_404* that model and then call the
-    decorated function. The request's accessories will have an "object"
-    key that references the model object that was fetched.
+    This decorator  requires one  argument, *model*  which is  the model
+    name  queried by  the decorator.  The decorator  expects urlconf  to
+    pass  the keyword  argument "id"  to the  view, though  this can  be
+    overriden  with  the  *kwarg*  parameter. The  decorator  will  then
+    *get_object_or_404* that  that *model*  and then call  the decorated
+    function  with an  keyword  argument  whose key  is  the model  name
+    (lowercase) and whose value will be the object retrieved.
 
     If  *field* is  specified, then  the model  will be  queried by  the
     specified field instead of the default primary key.
@@ -35,27 +35,28 @@ def detail_view(model, field='pk', methods=None):
         from .models import Book
 
         @detail_view(Book)
-        def book_detail(request, book_id):
-            book = request.accessories['object']
+        def book_detail(request, book):
             return HttpResponse(book.title, content_type='text/plain')
 
     The urlconf would look something like this::
 
-        (r'^book/(\d+)/', 'some_app.views.book_detail')
+        (r'^book/(?P<id>\d+)/', 'some_app.views.book_detail')
 
     In addition it accepts the *methods* argument as all view decorators.
     """
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            obj = get_object_or_404(model, **{field: args[0]})
-            accessorize(request, object=obj)
+            lookup = kwargs.pop(kwarg)
+            obj = get_object_or_404(model, **{field: lookup})
+            obj_name = obj._meta.model_name
+            kwargs[obj_name] = obj
             return view(methods=methods)(func)(request, *args, **kwargs)
         return wrapper
     return decorate
 
 
-def template_detail_view(model, field='pk', template_name=None,
+def template_detail_view(model, field='pk', kwarg='id', template_name=None,
                          content_type=None, template_name_suffix='_detail',
                          methods=None):
     """A detail view that renders a template.
@@ -76,12 +77,21 @@ def template_detail_view(model, field='pk', template_name=None,
 
     In  addition  it   accepts  the  *methods*  argument   as  all  view
     decorators.
+
+    A quick example::
+
+        from .models import Book
+
+        @template_detail_view(Book)
+        def book_detail(request, book): pass
     """
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            obj = get_object_or_404(model, **{field: args[0]})
-            accessorize(request, object=obj)
+            lookup = kwargs.pop('id')
+            obj = get_object_or_404(model, **{field: lookup})
+            obj_name = obj._meta.model_name
+            kwargs[obj_name] = obj
 
             my_template_name = template_name
             if not my_template_name:

@@ -3,17 +3,18 @@ from __future__ import unicode_literals
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_app.settings')
 
+from django import forms, http
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django import forms
-from django import http
-from django.test import TestCase, RequestFactory
+from django.forms.models import ModelForm
+from django.test import RequestFactory, TestCase
 
-from view_accessories.form import form_view
-from view_accessories.generic import view, redirect_view
-from view_accessories.detail import detail_view
-from view_accessories.list import list_view, paginate_queryset
 from test_app.models import Widget
+from view_accessories.detail import detail_view
+from view_accessories.edit import create_view, form_view
+from view_accessories.generic import redirect_view, view
+from view_accessories.list import list_view, paginate_queryset
+
 
 factory = RequestFactory()
 
@@ -435,6 +436,33 @@ class FormView(TestCase):
         self.assertEqual(form.cleaned_data['name'], 'Sally')
         self.assertEqual(form.cleaned_data['age'], 5)
 
+    def test_success_url(self):
+        # Given the form
+        class TestForm(forms.Form):
+            name = forms.CharField(max_length=100)
+            age = forms.IntegerField()
+
+        # And the form_view that uses the form
+        @form_view(form=TestForm, success_url='https://www.google.com/')
+        def test_view(request, form):
+            response = http.HttpResponse(form.as_p(), content_type='text/html')
+            return response
+
+        # When I post the form invalidly
+        post_data = {'name': 'Sally'}  # missing required age
+        response = test_view(factory.post('/', post_data))
+
+        # Then I am taken back to the form
+        self.assertContains(response, 'This field is required.')
+
+        # When I post with valid data
+        post_data = {'name': 'Sally', 'age': 5}
+        response = test_view(factory.post('/', post_data))
+
+        # Then I am redirected
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'https://www.google.com/')
+
     def test_form_view_stacked_with_detail_and_template_views(self):
         # And the following widget
         widget = Widget.objects.create(text='Original Text')
@@ -455,6 +483,56 @@ class FormView(TestCase):
         # And the model is updated
         widget = Widget.objects.get(pk=widget.pk)  # refetch
         self.assertEqual(widget.text, 'New Text')
+
+
+class CreateView(TestCase):
+    def test_create_view(self):
+        # Given the create_view
+        @create_view(model=Widget, fields=['text'],
+                     success_url='https://www.google.com/')
+        def test_view(request, form):
+            self.assertTrue(isinstance(form, ModelForm))
+            self.assertNotEqual(form.instance.pk, None)
+            response = http.HttpResponse(form.as_p(), content_type='text/html')
+            return response
+
+        # When I post to the form
+        post_data = {'text': 'CreateView'}
+        response = test_view(factory.post('/', post_data))
+
+        # Then a model is saved
+        widget = Widget.objects.filter(text='CreateView')
+        self.assertEqual(widget.count(), 1)
+
+        # And I am redirected
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'https://www.google.com/')
+
+    def test_create_view_with_invalid(self):
+        # Given the create_view
+        view = reverse('test_app.views.create_form')
+
+        # When I incorrectly post
+        post_data = {}
+        response = self.client.post(view, post_data)
+
+        # Then we are taken back to the form
+        self.assertContains(response, 'This field is required.')
+
+    def test_template_create_form(self):
+        # Given the template_create_view
+        view = reverse('test_app.views.create_template')
+
+        # When I
+        post_data = {'text': 'test_template_create_form'}
+        response = self.client.post(view, post_data)
+
+        # Then a model is saved
+        widget = Widget.objects.filter(text='test_template_create_form')
+        self.assertEqual(widget.count(), 1)
+
+        # And I am redirected
+        self.assertEqual(response.status_code, 302)
 
 
 if __name__ == '__main__':

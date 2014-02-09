@@ -17,5 +17,7 @@ urlpatterns = patterns(
     url('^widgets4/$', 'login_required_view'),
     url('^form1/$', 'form1'),
     url('^form2/(?P<id>\d+)/$', 'form2'),
+    url('^create1/$', 'create_form'),
+    url('^create2/$', 'create_template'),
     url('^$', 'index'),
 )

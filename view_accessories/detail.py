@@ -88,7 +88,7 @@ def template_detail_view(model, field='pk', kwarg='id', template_name=None,
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
-            lookup = kwargs.pop('id')
+            lookup = kwargs.pop(kwarg)
             obj = get_object_or_404(model, **{field: lookup})
             obj_name = obj._meta.model_name
             kwargs[obj_name] = obj

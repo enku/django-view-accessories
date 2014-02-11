@@ -2,7 +2,7 @@
 from functools import wraps
 
 from django.forms import models as model_forms
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from .generic import template_view, view
 
 
@@ -94,7 +94,7 @@ def template_create_view(model, fields, template_name=None, content_type=None,
                          methods=None):
     """A create_view that renders a template.
 
-    This is  a creat_view decorated with  a template view. It  takes the
+    This is a  create_view decorated with a template view.  It takes the
     same arguments as `template_view` and `create_view`. By default, the
     *template_name*  is  taken  from  the  model  name  with  "_created"
     added (though  that can  be changed with  the *template_name_suffix*
@@ -105,6 +105,7 @@ def template_create_view(model, fields, template_name=None, content_type=None,
             pass
     """
     def decorate(func):
+        @wraps(func)
         def wrapper(request, *args, **kwargs):
             my_template_name = template_name
             if not my_template_name:
@@ -117,5 +118,33 @@ def template_create_view(model, fields, template_name=None, content_type=None,
             myview = create_view(model, fields, success_url=success_url,
                                  methods=methods)(myview)
             return myview(request, *args, **kwargs)
+        return wrapper
+    return decorate
+
+
+def update_view(model, field='pk', kwarg='id', fields=None, success_url=None,
+                methods=None):
+    def decorate(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            lookup = kwargs.pop(kwarg)
+            obj = get_object_or_404(model, **{field: lookup})
+            obj_name = obj._meta.model_name
+            form_cls = model_forms.modelform_factory(model, fields=fields)
+            if request.method == 'POST':
+                form = form_cls(request.POST, instance=obj)
+                if form.is_valid():
+                    form.save()
+                    obj = form.instance
+            else:
+                form = form_cls(instance=obj)
+
+            kwargs['form'] = form
+            kwargs[obj_name] = obj
+
+            response = view(methods=methods)(func)(request, *args, **kwargs)
+            if request.method == 'POST' and success_url and form.is_valid():
+                return redirect(success_url)
+            return response
         return wrapper
     return decorate

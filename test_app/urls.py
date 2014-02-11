@@ -19,5 +19,6 @@ urlpatterns = patterns(
     url('^form2/(?P<id>\d+)/$', 'form2'),
     url('^create1/$', 'create_form'),
     url('^create2/$', 'create_template'),
+    url('^update1/(?P<id>\d+)/$', 'update1'),
     url('^$', 'index'),
 )

@@ -71,7 +71,7 @@ def stacked_list_view(request, widgets):
 
 
 @lists.template_list_view(queryset=Widget.objects.order_by('-pk'),
-                          allow_empty=False, paginate=5, page_size=5)
+                          allow_empty=False, paginate=True, page_size=5)
 def my_template_list_view(request, widgets, pagination):
     widgets = pagination['objects']
     return {'widgets': widgets, 'desc': True}
@@ -112,6 +112,12 @@ def create_form(request, form):
 
 @edit.template_create_view(model=Widget, fields=['text'], success_url='/')
 def create_template(request, form):
+    pass
+
+
+@edit.update_view(model=Widget, success_url='/')
+@generic.template_view(template_name='test_app/widget_create.html')
+def update1(request, widget, form):
     pass
 
 

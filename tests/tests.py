@@ -11,7 +11,7 @@ from django.test import RequestFactory, TestCase
 
 from test_app.models import Widget
 from view_accessories.detail import detail_view
-from view_accessories.edit import create_view, form_view
+from view_accessories.edit import create_view, form_view, update_view
 from view_accessories.generic import redirect_view, view
 from view_accessories.list import list_view, paginate_queryset
 
@@ -533,6 +533,36 @@ class CreateView(TestCase):
 
         # And I am redirected
         self.assertEqual(response.status_code, 302)
+
+
+class UpdateView(TestCase):
+    def test_update_view(self):
+        # Given the model instance
+        widget = Widget.objects.create(text='test_update_view')
+        pk = widget.pk
+
+        # And the update_view
+        @update_view(model=Widget, fields=['text'],
+                     success_url='https://www.google.com/')
+        def test_view(request, widget, form):
+            self.assertTrue(isinstance(form, ModelForm))
+            self.assertEqual(widget.pk, pk)
+            return http.HttpResponse(form.as_p())
+
+        # When I GET the view
+        response = test_view(factory.get('/'), id=widget.pk)
+
+        # Then the form is pre-populated with the instance
+        self.assertContains(response, '"test_update_view"')
+
+        # When I post to the view
+        post_data = {'text': 'updated text'}
+        response = test_view(factory.post('/', post_data), id=widget.pk)
+        self.assertEqual(response.status_code, 302)
+
+        # My widget is updated
+        widget = Widget.objects.get(pk=widget.pk)
+        self.assertEqual(widget.text, 'updated text')
 
 
 if __name__ == '__main__':

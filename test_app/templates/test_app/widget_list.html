@@ -3,7 +3,7 @@
 <body>
   {% if desc %}<p>In descending order</p>{% endif %}
   <ul>{% for widget in widgets %}
-      <li>{{ widget }}</li>
+      <li><a href="{% url "test_app.views.update2" widget.pk %}">{{ widget }}</a></li>
       {% endfor %}</ul>
 </body>
 

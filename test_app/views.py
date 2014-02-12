@@ -105,7 +105,7 @@ def form2(request, widget, form):
 
 
 @edit.create_view(model=Widget, fields=['text'], success_url='/')
-@generic.template_view(template_name='test_app/widget_create.html')
+@generic.template_view(template_name='test_app/widget_create_form.html')
 def create_form(request, form):
     pass
 
@@ -121,6 +121,12 @@ def update1(request, widget, form):
     pass
 
 
+@edit.template_update_view(model=Widget, success_url='/')
+def update2(request, widget, form):
+    pass
+
+
 @generic.template_view(template_name='test_app/index.html')
 def index(request):
-    return {'version': __version__}
+    widget = Widget.objects.order_by('?')[0]
+    return {'version': __version__, 'widget': widget}

@@ -4,7 +4,7 @@ from django.conf.urls import patterns, url
 
 urlpatterns = patterns(
     'test_app.views',
-    url('^my_view/(\d+)/$', 'my_view'),
+    url('^my_view/(.+)/$', 'my_view'),
     url('^my_template_view/(.+)/$', 'my_template_view'),
     url('^redirect/$', 'my_redirect_view'),
     url('^post/$', 'post_only'),
@@ -20,5 +20,6 @@ urlpatterns = patterns(
     url('^create1/$', 'create_form'),
     url('^create2/$', 'create_template'),
     url('^update1/(?P<id>\d+)/$', 'update1'),
+    url('^update2/(?P<id>\d+)/$', 'update2'),
     url('^$', 'index'),
 )

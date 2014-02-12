@@ -90,13 +90,13 @@ def create_view(model, fields, success_url=None, methods=None):
 
 
 def template_create_view(model, fields, template_name=None, content_type=None,
-                         template_name_suffix='_create', success_url=None,
+                         template_name_suffix='_create_form', success_url=None,
                          methods=None):
     """A create_view that renders a template.
 
     This is a  create_view decorated with a template view.  It takes the
     same arguments as `template_view` and `create_view`. By default, the
-    *template_name*  is  taken  from  the  model  name  with  "_created"
+    *template_name*  is taken  from the  model name  with "_create_form"
     added (though  that can  be changed with  the *template_name_suffix*
     argument. A quick example::
 
@@ -124,6 +124,39 @@ def template_create_view(model, fields, template_name=None, content_type=None,
 
 def update_view(model, field='pk', kwarg='id', fields=None, success_url=None,
                 methods=None):
+    """A view to update a model.
+
+    This decorator is a cross between a detail view and a form view. The
+    decorator is passed and argument  *model* and, like the detail_view,
+    is expected to  be called via the urlconf with  the keyword argument
+    "id" to  the view,  though this  can be  overriden with  the *kwarg*
+    parameter.  The decorator  will then  *get_object_or_404* that  that
+    *model* to get the model  instance, then a ModelForm is instantiated
+    from  that  model instance.  When  the  view  is POSTed,  the  model
+    instance  is  saved.  Like  other  edit views,  this  view  takes  a
+    *success_url*  and, if  passed and  the  POST's form  is valid,  the
+    response will be an HTTP redirect to the given url.
+
+    The decorated  view will  be passed 2  keyword arguments:  the first
+    would be the model name (lowercased and underscored), and it's value
+    will be  the model instance,  the second keyword argument  is "form"
+    and will be the ModelForm instance.
+
+    If  *field* is  specified, then  the model  will be  queried by  the
+    specified field instead of the default primary key.
+
+    A quick example::
+
+        @update_view(model=Widget, success_url='/')
+        @template_view(template_name='some_app/widget_update_form.html')
+        def edit_widget(request, widget, form):
+            pass
+
+    And in urls.py::
+
+        (r'^widget/(?P<id>\d+)/', 'some_app.views.edit_widget')
+
+    """
     def decorate(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
@@ -146,5 +179,40 @@ def update_view(model, field='pk', kwarg='id', fields=None, success_url=None,
             if request.method == 'POST' and success_url and form.is_valid():
                 return redirect(success_url)
             return response
+        return wrapper
+    return decorate
+
+
+def template_update_view(model, field='pk', kwarg='id', fields=None,
+                         template_name=None, content_type=None,
+                         template_name_suffix='_update_form', success_url=None,
+                         methods=None):
+    """An update_view that renders a template.
+
+    This is an update_view decorated with  a template view. It takes the
+    same arguments as `template_view` and `update_view`. By default, the
+    *template_name*  is taken  from the  model name  with "_update_form"
+    added (though  that can  be changed with  the *template_name_suffix*
+    argument. A quick example::
+
+        @template_update_view(model=Widget, success_url='/')
+        def create_form(request, widget, form):
+            pass
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            my_template_name = template_name
+            if not my_template_name:
+                my_template_name = '%s/%s%s.html' % (
+                    model._meta.app_label,
+                    model._meta.model_name,
+                    template_name_suffix)
+            myview = template_view(my_template_name, content_type=content_type,
+                                   methods=methods)(func)
+            myview = update_view(model=model, field=field, kwarg=kwarg,
+                                 fields=fields, success_url=success_url,
+                                 methods=methods)(myview)
+            return myview(request, *args, **kwargs)
         return wrapper
     return decorate

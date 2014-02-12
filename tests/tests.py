@@ -564,6 +564,23 @@ class UpdateView(TestCase):
         widget = Widget.objects.get(pk=widget.pk)
         self.assertEqual(widget.text, 'updated text')
 
+    def test_template_update_view(self):
+        """template_update_view()"""
+        # Given the model instance
+        widget = Widget.objects.create(text='template_update_view')
+
+        # Given the template_update_view
+        view = reverse('test_app.views.update2', args=[widget.pk])
+
+        # When I post to the view
+        post_data = {'text': 'updated text'}
+        response = self.client.post(view, post_data)
+        self.assertEqual(response.status_code, 302)
+
+        # My widget is updated
+        widget = Widget.objects.get(pk=widget.pk)
+        self.assertEqual(widget.text, 'updated text')
+
 
 if __name__ == '__main__':
     from django.test.simple import DjangoTestSuiteRunner

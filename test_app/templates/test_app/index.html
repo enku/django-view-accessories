@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html>
 <body>
-<h2>Django Accessorized Views {{ verson }}</h2>
+<h2>Django Accessorized Views {{ version }}</h2>
 
 <ul>
-    <li><a href="{% url "test_app.views.my_view" 1 %}">view</a></li>
+    <li><a href="{% url "test_app.views.my_view" widget.text %}">view</a></li>
     <li><a href="{% url "test_app.views.my_template_view" "Hello world" %}">template_view</a></li>
     <li><a href="{% url "test_app.views.my_redirect_view" %}">redirect_view</a></li>
     <li><a href="{% url "test_app.views.post_only" %}">view(methods=['POST'])</a></li>
-    <li><a href="{% url "test_app.views.my_detail_view" 1 %}">detail_view</a></li>
-    <li><a href="{% url "test_app.views.detail_view_with_template" 1 %}">template_view on top of detail_view</a></li>
-    <li><a href="{% url "test_app.views.detail_view_with_template2" 1 %}">template_detail_view</a></li>
+    <li><a href="{% url "test_app.views.my_detail_view" widget.pk %}">detail_view</a></li>
+    <li><a href="{% url "test_app.views.detail_view_with_template" widget.pk %}">template_view on top of detail_view</a></li>
+    <li><a href="{% url "test_app.views.detail_view_with_template2" widget.pk %}">template_detail_view</a></li>
     <li><a href="{% url "test_app.views.my_list_view" %}">list_view</a></li>
     <li><a href="{% url "test_app.views.stacked_list_view" %}">template_view on
         top of list_view</a></li>
     <li><a href="{% url "test_app.views.my_template_list_view"  %}">template_list_view</a></li>
     <li><a href="{% url "test_app.views.login_required_view" %}">login_required on top of list_view</a></li>
     <li><a href="{% url "test_app.views.form1" %}">form_view</a></li>
-    <li><a href="{% url "test_app.views.form2" 1 %}">triple-stacked form_view</a></li>
+    <li><a href="{% url "test_app.views.form2" widget.pk %}">triple-stacked form_view</a></li>
     <li><a href="{% url "test_app.views.create_form" %}">create_view</a></li>
     <li><a href="{% url "test_app.views.create_template" %}">template_create_view</a></li>
-    <li><a href="{% url "test_app.views.update1" 1 %}">update_view</a></li>
+    <li><a href="{% url "test_app.views.update1" widget.pk %}">update_view</a></li>
+    <li><a href="{% url "test_app.views.update2" widget.pk %}">template_update_view</a></li>
 </ul>
 </html>

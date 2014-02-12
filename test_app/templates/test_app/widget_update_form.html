@@ -1,14 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Update Widget {{ widget.pk }}</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Update Widget {{ widget.pk }}{% endblock %}
+
+{% block content %}
 <h1>Update Widget {{ widget.pk }}</h1>
 <form action="." method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <p><input type="submit" value="Submit" /></p>
 </form>
-</body>
-</html>
+{% endblock %}

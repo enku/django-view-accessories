@@ -1,13 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>form_view test</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}form_view test{% endblock %}
+{% block content %}
 {% if text %}<p>Your text: "{{ text }}"</p>{% endif %}
 <form action="." method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <p><input type="submit" value="Submit" />
+    <p><input type="submit" value="Submit" /></p>
 </form>
-</body>
+{% endblock %}

@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html>
-<body>
+{% extends "base.html" %}
+{% block content %}
 <h2>Django Accessorized Views {{ version }}</h2>
-
 <ul>
     <li><a href="{% url "test_app.views.my_view" widget.text %}">view</a></li>
     <li><a href="{% url "test_app.views.my_template_view" "Hello world" %}">template_view</a></li>
@@ -23,4 +21,4 @@
     <li><a href="{% url "test_app.views.update1" widget.pk %}">update_view</a></li>
     <li><a href="{% url "test_app.views.update2" widget.pk %}">template_update_view</a></li>
 </ul>
-</html>
+{% endblock content %}

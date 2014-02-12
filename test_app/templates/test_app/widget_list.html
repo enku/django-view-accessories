@@ -1,10 +1,9 @@
-<!DOCTYPE html>
-<head><title>Widgets</title></head>
-<body>
-  {% if desc %}<p>In descending order</p>{% endif %}
+{% extends "base.html" %}
+{% block title %}Widgets{% endblock %}
+{% block content %}
+  {% if desc %}<h2>In Descending Order</h2>{% endif %}
   <ul>{% for widget in widgets %}
       <li><a href="{% url "test_app.views.update2" widget.pk %}">{{ widget }}</a></li>
       {% endfor %}</ul>
-</body>
-
+{% endblock content %}
 

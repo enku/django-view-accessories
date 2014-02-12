@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<head>
+  <title>{% block title %}Django Accessorized Views{% endblock %}</title>
+  {% block style %}
+  <style type="text/css">
+    * {
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+    }
+
+    html {
+        margin: 0 6em;
+        background-color: #bfbfbf;
+        height: 100%;
+    }
+
+    body {
+        background-color: #eee;
+        font: 14px Arial, Helvetica, sans-serif;
+        color: #444;
+        height: 100%;
+    }
+    
+    h1, h2 {
+        padding: 1em 0;
+        text-align: center;
+    }
+
+    #content {
+        height: 70%;
+        width: 70%;
+        margin: auto;
+        padding: 3em 0;
+    }
+
+    a {
+        color: #009dd9;
+        text-decoration: none;
+    }
+
+    ol, ul {
+        list-style: none;
+    }
+
+    li {
+        padding: 2px 0;
+    }
+
+    p { 
+        padding: 0.5em 0;
+    }
+
+    input[type=submit] {
+        padding: 3px;
+    }
+
+    input[type=text] {
+        border: 1px solid #ccc;
+        padding: 2px;
+    }
+
+    input[type=text]:active {
+        border: 1px solid #acc;
+    }
+  </style>
+  {% endblock style %}
+</head>
+<body>
+<div id="content">{% block content %}{% endblock %}</div>
+</body>

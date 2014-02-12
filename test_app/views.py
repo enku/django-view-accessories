@@ -116,7 +116,7 @@ def create_template(request, form):
 
 
 @edit.update_view(model=Widget, success_url='/')
-@generic.template_view(template_name='test_app/widget_create.html')
+@generic.template_view(template_name='test_app/widget_update_form.html')
 def update1(request, widget, form):
     pass
 

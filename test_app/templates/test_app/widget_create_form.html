@@ -1,11 +1,11 @@
+{% extends "base.html" %}
 <!DOCTYPE html>
-<html>
-<body>
+{% block title %}Create Widget{% endblock %}
+{% block content %}
 <h2>Create Widget</h2>
 <form action="." method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <p><input type="submit" value="Submit" /></p>
 </form>
-</body>
-</html>
+{% endblock %}

@@ -21,5 +21,7 @@ urlpatterns = patterns(
     url('^create2/$', 'create_template'),
     url('^update1/(?P<id>\d+)/$', 'update1'),
     url('^update2/(?P<id>\d+)/$', 'update2'),
+    url('^delete1/(?P<id>\d+)/$', 'delete1'),
+    url('^delete2/(?P<id>\d+)/$', 'delete2'),
     url('^$', 'index'),
 )

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Confirm Delete{% endblock %}
+{% block content %}
+<form method="POST" action=".">
+    {% csrf_token %}
+    <p>Are you sure you want to delete Widget {{ widget.pk }}: {{ widget.text }}?</p>
+    <p style="text-align: center">
+        <input type="submit" value="No" onclick="window.location='/';" />
+        <input type="submit" value="Yes" />
+    </p>
+</form>
+{% endblock %}

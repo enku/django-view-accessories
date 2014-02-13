@@ -271,7 +271,7 @@ class ListView(TestCase):
         for i in range(10):
             self.assertContains(response, 'StackedWidget%i' % i)
 
-        self.assertNotContains(response, 'In descending order')
+        self.assertNotContains(response, 'In Descending Order')
 
 
 class TemplateListView(TestCase):
@@ -290,7 +290,7 @@ class TemplateListView(TestCase):
         for i in range(5):
             self.assertContains(response, 'TemplateListView_%i' % i)
 
-        self.assertContains(response, 'In descending order')
+        self.assertContains(response, 'In Descending Order')
 
     def test_template_list_view_has_pagination(self):
         # Given the widgets.
@@ -580,6 +580,62 @@ class UpdateView(TestCase):
         # My widget is updated
         widget = Widget.objects.get(pk=widget.pk)
         self.assertEqual(widget.text, 'updated text')
+
+
+class DeleteView(TestCase):
+    def test_delete_view(self):
+        # Given the model instance
+        widget = Widget.objects.create(text='test_delete_view')
+
+        # And the delete_view
+        url = reverse('test_app.views.delete1', args=[widget.pk])
+
+        # When we GET to the view
+        response = self.client.get(url)
+
+        # Then we get the confirmation page
+        self.assertContains(
+            response,
+            'Are you sure you want to delete Widget %s' % widget.pk
+        )
+
+        # When we POST to the view
+        response = self.client.post(url)
+
+        # Then the model is deleted
+        with self.assertRaises(Widget.DoesNotExist):
+            Widget.objects.get(pk=widget.pk)
+
+        # And we are redirected
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://testserver/')
+
+    def test_template_delete_view(self):
+        # Given the model instance
+        widget = Widget.objects.create(text='test_template_delete_view')
+
+        # And the template_delete_view
+        url = reverse('test_app.views.delete2', args=[widget.pk])
+
+        # When we GET to the view
+        response = self.client.get(url)
+
+        # Then we get the confirmation page
+        self.assertContains(
+            response,
+            'Are you sure you want to delete Widget %s' % widget.pk
+        )
+
+        # When we POST to the view
+        response = self.client.post(url)
+
+        # Then the model is deleted
+        with self.assertRaises(Widget.DoesNotExist):
+            Widget.objects.get(pk=widget.pk)
+
+        # And we are redirected
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://testserver/')
 
 
 if __name__ == '__main__':

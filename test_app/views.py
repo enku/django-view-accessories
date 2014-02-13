@@ -126,6 +126,17 @@ def update2(request, widget, form):
     pass
 
 
+@edit.delete_view(model=Widget, success_url='/')
+@generic.template_view(template_name='test_app/widget_confirm_delete.html')
+def delete1(request, widget):
+    pass
+
+
+@edit.template_delete_view(model=Widget, success_url='/')
+def delete2(request, widget):
+    pass
+
+
 @generic.template_view(template_name='test_app/index.html')
 def index(request):
     widget = Widget.objects.order_by('?')[0]

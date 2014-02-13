@@ -216,3 +216,90 @@ def template_update_view(model, field='pk', kwarg='id', fields=None,
             return myview(request, *args, **kwargs)
         return wrapper
     return decorate
+
+
+def delete_view(model, field='pk', kwarg='id', success_url=None, methods=None):
+    """A view to delete a model.
+
+    The  delete_view is  like the  detail_view,  except if  the view  is
+    POSTed to  then the model instance  in question is deleted,  and the
+    response is an HTTP redirect if *success_url* is passed.
+
+    This decorator  requires one  argument, *model*  which is  the model
+    name  queried by  the decorator.  The decorator  expects urlconf  to
+    pass  the keyword  argument "id"  to the  view, though  this can  be
+    overriden  with  the  *kwarg*  parameter. The  decorator  will  then
+    *get_object_or_404* that  that *model*  and then call  the decorated
+    function  with an  keyword  argument  whose key  is  the model  name
+    (lowercase) and whose value will be the object retrieved.
+
+    If  *field* is  specified, then  the model  will be  queried by  the
+    specified field instead of the default primary key.
+
+    If the view is POSTed to,  then the model is deleted. Upon deletion,
+    if the  *success_url* is passed, then  the HTTP response will  be an
+    HTTP redirect  to the  success_url instead  of the  decorated view's
+    response.
+
+    A quick example::
+
+        @delete_view(model=Widget, success_url='/')
+        @template_view(template_name='some_app/widget_confirm_delete.html')
+        def delete_widget(request, widget):
+            pass
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            lookup = kwargs.pop(kwarg)
+            obj = get_object_or_404(model, **{field: lookup})
+            obj_name = obj._meta.model_name
+            kwargs[obj_name] = obj
+
+            response = view(methods=methods)(func)(request, *args, **kwargs)
+
+            if request.method == 'POST':
+                # confirmed.  Delete
+                obj.delete()
+                if success_url:
+                    return redirect(success_url)
+            return response
+        return wrapper
+    return decorate
+
+
+def template_delete_view(model, field='pk', kwarg='id', template_name=None,
+                         content_type=None,
+                         template_name_suffix='_confirm_delete',
+                         success_url=None, methods=None):
+    """An delete_view that renders a template.
+
+    This is an delete_view decorated with  a template view. It takes the
+    same arguments as `template_view` and `delete_view`. By default, the
+    *template_name* is taken from  the model name with "_confirm_delete"
+    added (though  that can  be changed with  the *template_name_suffix*
+    argument.
+
+    A quick example::
+
+        @template_delete_view(model=Widget, success_url='/')
+        def delete_widget(request, widget):
+            pass
+    """
+    def decorate(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            my_template_name = template_name
+            if not my_template_name:
+                my_template_name = '%s/%s%s.html' % (
+                    model._meta.app_label,
+                    model._meta.model_name,
+                    template_name_suffix)
+            myview = template_view(my_template_name, content_type=content_type,
+                                   methods=methods)(func)
+            myview = delete_view(model=model, field=field, kwarg=kwarg,
+                                 success_url=success_url,
+                                 methods=methods)(myview)
+            return myview(request, *args, **kwargs)
+        return wrapper
+    return decorate

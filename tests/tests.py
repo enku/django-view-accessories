@@ -70,16 +70,18 @@ class TemplateView(TestCase):
     """Test for template views"""
     def test_template_view(self):
         """template_view"""
+        # Given the widget (We need at least one for the view to work)
+        Widget.objects.create(text='test_template_view')
+
         # Given the template view
-        view = reverse('test_app.views.my_template_view',
-                       args=['this is a test'])
+        view = reverse('test_app.views.my_template_view')
 
         # When we call the view
         response = self.client.get(view)
 
         # Then the template is rendered and returned
-        self.assertContains(response, 'this is a test')
-        self.assertEqual(response.templates[0].name, 'test_app/test.html')
+        self.assertEqual(response.templates[0].name,
+                         'test_app/my_template_view.html')
 
 
 class RedirectView(TestCase):

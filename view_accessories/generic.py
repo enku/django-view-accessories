@@ -62,12 +62,17 @@ def view(func=None, methods=None):
     return decorate
 
 
-def template_view(template_name, content_type=None, methods=None):
+def template_view(func=None, template_name=None, content_type=None,
+                  methods=None):
     """Template view decorator.
 
-    This is  analogous to Django's  TemplateView. It takes  2 arguments:
-    *template_name* (required)  is the  path name  to the  template. The
-    optional *content_type* is just as it sounds.
+    This  is analogous  to  Django's TemplateView.  It  takes 2  keyword
+    arguments:  *template_name*  is  the  path  name  to  the  template.
+    If  not  supplied, the  default  template  name  is taken  from  the
+    view  name and  app name.  For  example, the  view function  "foo()"
+    in  the app  "some_app"  would  have the  default  template name  of
+    "some_app/foo.html".  The  optional  *content_type* is  just  as  it
+    sounds.
 
     In  addition  it   accepts  the  *methods*  argument   as  all  view
     decorators.
@@ -79,8 +84,8 @@ def template_view(template_name, content_type=None, methods=None):
 
     A quick example::
 
-        @template_view(template_name='some_app/version.html')
-        def version(request):
+        @template_view
+        def about(request):
             return {'version': 2.0}
 
     """
@@ -89,18 +94,24 @@ def template_view(template_name, content_type=None, methods=None):
         def wrapper(request, *args, **kwargs):
             response = view(func, methods=methods)(request, *args, **kwargs)
             context = response if response is not None else kwargs
-            return render(request, template_name, context,
+            my_template_name = template_name or '%s/%s.html' % (
+                func.__module__.partition('.views')[0],
+                func.__name__
+            )
+            return render(request, my_template_name, context,
                           content_type=content_type)
         return wrapper
+    if func:
+        return decorate(func)
     return decorate
 
 
 def redirect_view(func=None, permanent=True, query_string=False, methods=None):
     """Redirect view decorator.
 
-    This is analogous to Django's RedirectView, but instead the url to
+    This is analogous  to Django's RedirectView, but instead  the url to
     redirect to is expected to be returned by the decorated view. If the
-    view returns an empty string (or None or False) the decorator will
+    view returns an  empty string (or None or False)  the decorator will
     return the HTTP GONE status to the client.
 
     The two  optional arguments are  *permanent* which defaults  to True

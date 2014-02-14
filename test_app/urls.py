@@ -5,7 +5,7 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns(
     'test_app.views',
     url('^my_view/(.+)/$', 'my_view'),
-    url('^my_template_view/(.+)/$', 'my_template_view'),
+    url('^my_template_view/$', 'my_template_view'),
     url('^redirect/$', 'my_redirect_view'),
     url('^post/$', 'post_only'),
     url('^widget/(?P<id>\d+)/$', 'my_detail_view'),

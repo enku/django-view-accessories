@@ -3,7 +3,7 @@
 <h2>Django Accessorized Views {{ version }}</h2>
 <ul>
     <li><a href="{% url "test_app.views.my_view" widget.text %}">view</a></li>
-    <li><a href="{% url "test_app.views.my_template_view" "Hello world" %}">template_view</a></li>
+    <li><a href="{% url "test_app.views.my_template_view" %}">template_view</a></li>
     <li><a href="{% url "test_app.views.my_redirect_view" %}">redirect_view</a></li>
     <li><a href="{% url "test_app.views.post_only" %}">view(methods=['POST'])</a></li>
     <li><a href="{% url "test_app.views.my_detail_view" widget.pk %}">detail_view</a></li>

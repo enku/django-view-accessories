@@ -22,9 +22,10 @@ def my_view(request, arg):
     return response
 
 
-@generic.template_view(template_name='test_app/test.html')
-def my_template_view(request, arg):
-    return {'arg': arg}
+@generic.template_view
+def my_template_view(request):
+    widget = Widget.objects.order_by('?')[0]
+    return {'widget': widget}
 
 
 @generic.redirect_view(permanent=False, query_string=True)
@@ -65,7 +66,7 @@ def my_list_view(request, widgets):
 
 
 @lists.list_view(Widget)
-@generic.template_view('test_app/widget_list.html')
+@generic.template_view(template_name='test_app/widget_list.html')
 def stacked_list_view(request, widgets):
     pass
 

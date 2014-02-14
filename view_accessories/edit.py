@@ -113,7 +113,8 @@ def template_create_view(model, fields, template_name=None, content_type=None,
                     model._meta.app_label,
                     model._meta.model_name,
                     template_name_suffix)
-            myview = template_view(my_template_name, content_type=content_type,
+            myview = template_view(template_name=my_template_name,
+                                   content_type=content_type,
                                    methods=methods)(func)
             myview = create_view(model, fields, success_url=success_url,
                                  methods=methods)(myview)
@@ -208,7 +209,8 @@ def template_update_view(model, field='pk', kwarg='id', fields=None,
                     model._meta.app_label,
                     model._meta.model_name,
                     template_name_suffix)
-            myview = template_view(my_template_name, content_type=content_type,
+            myview = template_view(template_name=my_template_name,
+                                   content_type=content_type,
                                    methods=methods)(func)
             myview = update_view(model=model, field=field, kwarg=kwarg,
                                  fields=fields, success_url=success_url,
@@ -295,7 +297,8 @@ def template_delete_view(model, field='pk', kwarg='id', template_name=None,
                     model._meta.app_label,
                     model._meta.model_name,
                     template_name_suffix)
-            myview = template_view(my_template_name, content_type=content_type,
+            myview = template_view(template_name=my_template_name,
+                                   content_type=content_type,
                                    methods=methods)(func)
             myview = delete_view(model=model, field=field, kwarg=kwarg,
                                  success_url=success_url,

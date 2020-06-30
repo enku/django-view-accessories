@@ -9,7 +9,7 @@ setup(
     author='Albert Hopkins',
     author_email='marduk@python.net',
     license='BSD',
-    install_requires=['Django>=1.5.5,<1.7'],
+    install_requires=['django>=1.11.29,<2.0'],
     packages=['view_accessories'],
     version=__version__,
     classifiers=[

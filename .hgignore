@@ -1,8 +1,0 @@
-
-\.ropeproject/
-.*\.egg-info/
-\.coverage
-htmlcov/
-db\.sqlite3
-manage\.py
-project/
